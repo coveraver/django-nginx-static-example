@@ -1,0 +1,31 @@
+services:
+  nginx:
+    container_name: proxy
+    restart: always
+    build:
+      context: temp
+      target: proxy
+    ports:
+      - 1337:80
+    depends_on:
+      server:
+        condition: service_healthy
+    volumes:
+      - ./temp/media:/media
+
+  server:
+    container_name: server
+    restart: always
+    build:
+      context: temp
+      target: server
+    command: ["python", "manage.py", "runserver", "0.0.0.0:8000"]
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://server:8000/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    volumes:
+      - ./temp/media:/server/media
+    environment:
+      DEBUG: 'False'
